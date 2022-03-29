@@ -12,6 +12,7 @@ namespace Moqt
 class RapidFuzz : public QObject
 {
     Q_OBJECT
+    QML_SINGLETON
     QML_NAMED_ELEMENT(RapidFuzz)//QML_ELEMENT Does not work with Qt 5.15.2
 
     Q_DISABLE_COPY_MOVE(RapidFuzz)

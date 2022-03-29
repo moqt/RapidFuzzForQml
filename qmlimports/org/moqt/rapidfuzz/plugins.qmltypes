@@ -11,6 +11,8 @@ Module {
         name: "Moqt::RapidFuzz"
         accessSemantics: "reference"
         exports: ["org.moqt.rapidfuzz/RapidFuzz 1.0"]
+        isCreatable: false
+        isSingleton: true
         exportMetaObjectRevisions: [256]
         Method {
             name: "bestScore"
