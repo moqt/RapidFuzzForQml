@@ -140,5 +140,26 @@ Module {
             Parameter { name: "s1"; type: "QString" }
             Parameter { name: "s2"; type: "QString" }
         }
+        Method {
+            name: "tokenSetRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+            Parameter { name: "caseSensitive"; type: "bool" }
+        }
+        Method {
+            name: "tokenSetRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+        }
+        Method {
+            name: "tokenSetRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+        }
     }
 }

@@ -31,6 +31,7 @@ public slots:
     qreal partialRatio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
     qreal tokenRatio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
     qreal tokenSortRatio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
+    qreal tokenSetRatio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
 };
 
 

@@ -92,7 +92,7 @@ QVariantList RapidFuzz::extract(const QStringList& query, const QStringList& cho
         const auto opt = extractOneWithSimpleQuery(toNormalizedStdWString(choice, caseSensitive), normalizedQuery, scoreCutoff);
         if (opt.has_value()) {
             const double score = opt.value().second;
-            results.append(QVariantList() << score << choice);
+            results.append(QVariant(QVariantList() << score << choice));
         }
     }
     return results;
@@ -128,6 +128,14 @@ qreal RapidFuzz::tokenSortRatio(const QString& s1, const QString& s2, qreal scor
     return rapidfuzz::fuzz::token_sort_ratio(toNormalizedStdWString(s1, caseSensitive),
                                              toNormalizedStdWString(s2, caseSensitive),
                                              scoreCutoff);
+}
+
+
+qreal RapidFuzz::tokenSetRatio(const QString& s1, const QString& s2, qreal scoreCutoff, bool caseSensitive)
+{
+    return rapidfuzz::fuzz::token_set_ratio(toNormalizedStdWString(s1, caseSensitive),
+                                            toNormalizedStdWString(s2, caseSensitive),
+                                            scoreCutoff);
 }
 
 
