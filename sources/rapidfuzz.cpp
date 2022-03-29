@@ -11,7 +11,7 @@ namespace
 
 template <typename Sentence1, typename Iterable, typename Sentence2 = typename Iterable::value_type>
 std::optional<std::pair<int, double>>
-extractOne(const Sentence1& query, const Iterable& choices, const double scoreCutoff = 0.0)
+extractOneWithSimpleQuery(const Sentence1& query, const Iterable& choices, const double scoreCutoff = 0.0)
 {
     int bestMatchIndex = -1;
     double bestScore = scoreCutoff;
@@ -48,7 +48,7 @@ RapidFuzz::RapidFuzz(QObject *parent)
 }
 
 
-QVariantList RapidFuzz::bestScore(const QStringList& query, const QStringList& choices, qreal scoreCutoff, bool caseSensitive)
+QVariantList RapidFuzz::extractOne(const QStringList& query, const QStringList& choices, qreal scoreCutoff, bool caseSensitive)
 {
     QList<std::wstring> choicesStd(choices.size());
     std::transform(choices.begin(), choices.end(), choicesStd.begin(), [caseSensitive] (const QString& e) {
@@ -58,7 +58,7 @@ QVariantList RapidFuzz::bestScore(const QStringList& query, const QStringList& c
     int bestIndex = -1;
     double bestScore = scoreCutoff;
     for (const auto& q : query) {
-        const auto opt = extractOne((caseSensitive ? q : q.toLower()).toStdWString(), choicesStd, scoreCutoff);
+        const auto opt = extractOneWithSimpleQuery((caseSensitive ? q : q.toLower()).toStdWString(), choicesStd, scoreCutoff);
         if (opt.has_value()) {
             const auto& pair = opt.value();
             const int index = pair.first;

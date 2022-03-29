@@ -15,7 +15,7 @@ Module {
         isSingleton: true
         exportMetaObjectRevisions: [256]
         Method {
-            name: "bestScore"
+            name: "extractOne"
             type: "QVariantList"
             Parameter { name: "query"; type: "QStringList" }
             Parameter { name: "choices"; type: "QStringList" }
@@ -23,7 +23,7 @@ Module {
             Parameter { name: "caseSensitive"; type: "bool" }
         }
         Method {
-            name: "bestScore"
+            name: "extractOne"
             type: "QVariantList"
             Parameter { name: "query"; type: "QStringList" }
             Parameter { name: "choices"; type: "QStringList" }

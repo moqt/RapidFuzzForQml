@@ -22,7 +22,7 @@ public:
 
 public slots:
     // returns [score, text]
-    QVariantList bestScore(const QStringList& query, const QStringList& choices, qreal scoreCutoff, bool caseSensitive = false);
+    QVariantList extractOne(const QStringList& query, const QStringList& choices, qreal scoreCutoff, bool caseSensitive = false);
 
 signals:
 
