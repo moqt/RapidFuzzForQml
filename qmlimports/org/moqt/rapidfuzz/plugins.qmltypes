@@ -29,5 +29,116 @@ Module {
             Parameter { name: "choices"; type: "QStringList" }
             Parameter { name: "scoreCutoff"; type: "double" }
         }
+        Method {
+            name: "extractOne"
+            type: "QVariantList"
+            Parameter { name: "query"; type: "QStringList" }
+            Parameter { name: "choices"; type: "QStringList" }
+        }
+        Method {
+            name: "extract"
+            type: "QVariantList"
+            Parameter { name: "query"; type: "QStringList" }
+            Parameter { name: "choices"; type: "QStringList" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+            Parameter { name: "caseSensitive"; type: "bool" }
+        }
+        Method {
+            name: "extract"
+            type: "QVariantList"
+            Parameter { name: "query"; type: "QStringList" }
+            Parameter { name: "choices"; type: "QStringList" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+        }
+        Method {
+            name: "extract"
+            type: "QVariantList"
+            Parameter { name: "query"; type: "QStringList" }
+            Parameter { name: "choices"; type: "QStringList" }
+        }
+        Method {
+            name: "ratio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+            Parameter { name: "caseSensitive"; type: "bool" }
+        }
+        Method {
+            name: "ratio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+        }
+        Method {
+            name: "ratio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+        }
+        Method {
+            name: "partialRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+            Parameter { name: "caseSensitive"; type: "bool" }
+        }
+        Method {
+            name: "partialRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+        }
+        Method {
+            name: "partialRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+        }
+        Method {
+            name: "tokenRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+            Parameter { name: "caseSensitive"; type: "bool" }
+        }
+        Method {
+            name: "tokenRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+        }
+        Method {
+            name: "tokenRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+        }
+        Method {
+            name: "tokenSortRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+            Parameter { name: "caseSensitive"; type: "bool" }
+        }
+        Method {
+            name: "tokenSortRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+            Parameter { name: "scoreCutoff"; type: "double" }
+        }
+        Method {
+            name: "tokenSortRatio"
+            type: "double"
+            Parameter { name: "s1"; type: "QString" }
+            Parameter { name: "s2"; type: "QString" }
+        }
     }
 }

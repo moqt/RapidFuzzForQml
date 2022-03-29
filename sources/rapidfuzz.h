@@ -21,11 +21,16 @@ public:
     explicit RapidFuzz(QObject *parent = nullptr);
 
 public slots:
-    // returns [score, text]
-    QVariantList extractOne(const QStringList& query, const QStringList& choices, qreal scoreCutoff, bool caseSensitive = false);
+    // Returns [score, choice]
+    QVariantList extractOne(const QStringList& query, const QStringList& choices, qreal scoreCutoff = 0.0, bool caseSensitive = false);
 
-signals:
+    // Returns [[score, choice], ...]
+    QVariantList extract(const QStringList& query, const QStringList& choices, qreal scoreCutoff = 0.0, bool caseSensitive = false);
 
+    qreal ratio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
+    qreal partialRatio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
+    qreal tokenRatio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
+    qreal tokenSortRatio(const QString& s1, const QString& s2, qreal scoreCutoff = 0.0, bool caseSensitive = false);
 };
 
 

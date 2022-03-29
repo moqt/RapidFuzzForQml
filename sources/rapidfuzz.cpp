@@ -11,7 +11,7 @@ namespace
 
 template <typename Sentence1, typename Iterable, typename Sentence2 = typename Iterable::value_type>
 std::optional<std::pair<int, double>>
-extractOneWithSimpleQuery(const Sentence1& query, const Iterable& choices, const double scoreCutoff = 0.0)
+extractOneWithSimpleQuery(const Sentence1& query, const Iterable& choices, const double scoreCutoff)
 {
     int bestMatchIndex = -1;
     double bestScore = scoreCutoff;
@@ -35,6 +35,22 @@ extractOneWithSimpleQuery(const Sentence1& query, const Iterable& choices, const
 }
 
 
+inline std::wstring toNormalizedStdWString(const QString& qs, bool caseSensitive)
+{
+    return (caseSensitive ? qs : qs.toLower()).toStdWString();
+}
+
+
+QList<std::wstring> toNormalizedStdWStringList(const QStringList& strings, bool caseSensitive)
+{
+    QList<std::wstring> normalizedStrings(strings.size());
+    std::transform(strings.begin(), strings.end(), normalizedStrings.begin(), [caseSensitive] (const QString& e) {
+        return toNormalizedStdWString(e, caseSensitive);
+    });
+    return normalizedStrings;
+}
+
+
 }
 
 
@@ -50,28 +66,68 @@ RapidFuzz::RapidFuzz(QObject *parent)
 
 QVariantList RapidFuzz::extractOne(const QStringList& query, const QStringList& choices, qreal scoreCutoff, bool caseSensitive)
 {
-    QList<std::wstring> choicesStd(choices.size());
-    std::transform(choices.begin(), choices.end(), choicesStd.begin(), [caseSensitive] (const QString& e) {
-        return (caseSensitive ? e : e.toLower()).toStdWString();
-    });
+    const auto normalizedChoices = toNormalizedStdWStringList(choices, caseSensitive);
 
     int bestIndex = -1;
     double bestScore = scoreCutoff;
     for (const auto& q : query) {
-        const auto opt = extractOneWithSimpleQuery((caseSensitive ? q : q.toLower()).toStdWString(), choicesStd, scoreCutoff);
+        const auto opt = extractOneWithSimpleQuery(toNormalizedStdWString(q, caseSensitive), normalizedChoices, bestScore);
         if (opt.has_value()) {
             const auto& pair = opt.value();
-            const int index = pair.first;
-            const double score = pair.second;
-            if (score >= bestScore) {
-                bestScore = score;
-                bestIndex = index;
-            }
+            bestScore = pair.second;
+            bestIndex = pair.first;
         }
     }
-    const QString bestText = bestIndex != -1 ? choices[bestIndex] : QString();
-    qDebug() << "RapidFuzz::bestScore:" << bestScore << bestText;
-    return QVariantList() << bestScore << bestText;
+    const QString bestChoice = bestIndex != -1 ? choices[bestIndex] : QString();
+    qDebug() << "RapidFuzz::extractOne:" << bestScore << bestChoice;
+    return QVariantList() << bestScore << bestChoice;
+}
+
+
+QVariantList RapidFuzz::extract(const QStringList& query, const QStringList& choices, qreal scoreCutoff, bool caseSensitive)
+{
+    QVariantList results;
+    const auto normalizedQuery = toNormalizedStdWStringList(query, caseSensitive);
+    for (const auto& choice : choices) {
+        const auto opt = extractOneWithSimpleQuery(toNormalizedStdWString(choice, caseSensitive), normalizedQuery, scoreCutoff);
+        if (opt.has_value()) {
+            const double score = opt.value().second;
+            results.append(QVariantList() << score << choice);
+        }
+    }
+    return results;
+}
+
+
+qreal RapidFuzz::ratio(const QString& s1, const QString& s2, qreal scoreCutoff, bool caseSensitive)
+{
+    return rapidfuzz::fuzz::ratio(toNormalizedStdWString(s1, caseSensitive),
+                                  toNormalizedStdWString(s2, caseSensitive),
+                                  scoreCutoff);
+}
+
+
+qreal RapidFuzz::partialRatio(const QString& s1, const QString& s2, qreal scoreCutoff, bool caseSensitive)
+{
+    return rapidfuzz::fuzz::partial_ratio(toNormalizedStdWString(s1, caseSensitive),
+                                          toNormalizedStdWString(s2, caseSensitive),
+                                          scoreCutoff);
+}
+
+
+qreal RapidFuzz::tokenRatio(const QString& s1, const QString& s2, qreal scoreCutoff, bool caseSensitive)
+{
+    return rapidfuzz::fuzz::token_ratio(toNormalizedStdWString(s1, caseSensitive),
+                                        toNormalizedStdWString(s2, caseSensitive),
+                                        scoreCutoff);
+}
+
+
+qreal RapidFuzz::tokenSortRatio(const QString& s1, const QString& s2, qreal scoreCutoff, bool caseSensitive)
+{
+    return rapidfuzz::fuzz::token_sort_ratio(toNormalizedStdWString(s1, caseSensitive),
+                                             toNormalizedStdWString(s2, caseSensitive),
+                                             scoreCutoff);
 }
 
 
