@@ -1,6 +1,6 @@
 TEMPLATE = lib
 CONFIG += static plugin
-CONFIG += c++11
+CONFIG += c++17
 CONFIG += qmltypes
 QT += qml
 

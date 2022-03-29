@@ -1,5 +1,7 @@
 #include "rapidfuzz.h"
 
+#include <optional>
+
 #include <rapidfuzz/fuzz.hpp>
 
 #include <QDebug>
@@ -41,9 +43,9 @@ inline std::wstring toNormalizedStdWString(const QString& qs, bool caseSensitive
 }
 
 
-QList<std::wstring> toNormalizedStdWStringList(const QStringList& strings, bool caseSensitive)
+QVector<std::wstring> toNormalizedStdWStringList(const QStringList& strings, bool caseSensitive)
 {
-    QList<std::wstring> normalizedStrings(strings.size());
+    QVector<std::wstring> normalizedStrings(strings.size());
     std::transform(strings.begin(), strings.end(), normalizedStrings.begin(), [caseSensitive] (const QString& e) {
         return toNormalizedStdWString(e, caseSensitive);
     });
@@ -73,7 +75,7 @@ QVariantList RapidFuzz::extractOne(const QStringList& query, const QStringList& 
     for (const auto& q : query) {
         const auto opt = extractOneWithSimpleQuery(toNormalizedStdWString(q, caseSensitive), normalizedChoices, bestScore);
         if (opt.has_value()) {
-            const auto& pair = opt.value();
+            const auto& pair = *opt;
             bestScore = pair.second;
             bestIndex = pair.first;
         }
@@ -91,7 +93,7 @@ QVariantList RapidFuzz::extract(const QStringList& query, const QStringList& cho
     for (const auto& choice : choices) {
         const auto opt = extractOneWithSimpleQuery(toNormalizedStdWString(choice, caseSensitive), normalizedQuery, scoreCutoff);
         if (opt.has_value()) {
-            const double score = opt.value().second;
+            const double score = opt->second;
             results.append(QVariant(QVariantList() << score << choice));
         }
     }

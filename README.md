@@ -12,7 +12,7 @@ RapidFuzzForQml is a static library. See [example](https://github.com/moqt/Rapid
 
 Import module:
 ```qml
-import org.moqt.rapidfuzz
+import org.moqt.rapidfuzz 1.0
 ```
 
 RapidFuzz is a singleton:
