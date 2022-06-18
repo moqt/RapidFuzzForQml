@@ -7,10 +7,9 @@
 #include <cstring>
 #include <limits>
 #include <rapidfuzz/details/SplittedSentenceView.hpp>
+#include <rapidfuzz/details/intrinsics.hpp>
 #include <rapidfuzz/details/type_traits.hpp>
 #include <rapidfuzz/details/types.hpp>
-#include <tuple>
-#include <unordered_set>
 #include <vector>
 
 namespace rapidfuzz {
@@ -36,6 +35,22 @@ namespace common {
  * @{
  */
 
+static inline double NormSim_to_NormDist(double score_cutoff, double imprecision = 0.00001)
+{
+    return std::min(1.0, 1.0 - score_cutoff + imprecision);
+}
+
+static inline void assume(bool b)
+{
+#if defined(__clang__)
+    __builtin_assume(b);
+#elif defined(__GNUC__) || defined(__GNUG__)
+    if (!b) __builtin_unreachable();
+#elif defined(_MSC_VER)
+    __assume(b);
+#endif
+}
+
 template <typename InputIt1, typename InputIt2>
 DecomposedSet<InputIt1, InputIt2, InputIt1> set_decomposition(SplittedSentenceView<InputIt1> a,
                                                               SplittedSentenceView<InputIt2> b);
@@ -49,7 +64,9 @@ template <int Max = 1>
 constexpr double norm_distance(int64_t dist, int64_t lensum, double score_cutoff = 0)
 {
     double max = static_cast<double>(Max);
-    return result_cutoff((lensum > 0) ? (max - max * dist / lensum) : max, score_cutoff);
+    return result_cutoff(
+        (lensum > 0) ? (max - max * static_cast<double>(dist) / static_cast<double>(lensum)) : max,
+        score_cutoff);
 }
 
 template <int Max = 1>
@@ -105,336 +122,18 @@ auto to_end(T& x)
     return end(x);
 }
 
-/**
- * @brief Finds the first mismatching pair of elements from two ranges:
- * one defined by [first1, last1) and another defined by [first2,last2).
- * Similar implementation to std::mismatch from C++14
- *
- * @param first1, last1 - the first range of the elements
- * @param first2, last2 - the second range of the elements
- *
- * @return std::pair with iterators to the first two non-equal elements.
- */
-template <typename InputIterator1, typename InputIterator2>
-std::pair<InputIterator1, InputIterator2> mismatch(InputIterator1 first1, InputIterator1 last1,
-                                                   InputIterator2 first2, InputIterator2 last2);
-
 template <typename InputIt1, typename InputIt2>
 StringAffix remove_common_affix(InputIt1& first1, InputIt1& last1, InputIt2& first2,
                                 InputIt2& last2);
 
 template <typename InputIt1, typename InputIt2>
-int64_t remove_common_prefix(InputIt1& first1, InputIt1 last1, InputIt2& first2, InputIt2 last2);
+size_t remove_common_prefix(InputIt1& first1, InputIt1 last1, InputIt2& first2, InputIt2 last2);
 
 template <typename InputIt1, typename InputIt2>
-int64_t remove_common_suffix(InputIt1 first1, InputIt1& last1, InputIt2 first2, InputIt2& last2);
+size_t remove_common_suffix(InputIt1 first1, InputIt1& last1, InputIt2 first2, InputIt2& last2);
 
-template <typename InputIt, typename CharT = iterator_type<InputIt>>
+template <typename InputIt, typename CharT = iter_value_t<InputIt>>
 SplittedSentenceView<InputIt> sorted_split(InputIt first, InputIt last);
-
-template <typename T>
-constexpr auto to_unsigned(T value) -> typename std::make_unsigned<T>::type
-{
-    return typename std::make_unsigned<T>::type(value);
-}
-
-template <typename T>
-constexpr auto to_signed(T value) -> typename std::make_unsigned<T>::type
-{
-    return typename std::make_signed<T>::type(value);
-}
-
-/*
- * taken from https://stackoverflow.com/a/17251989/11335032
- */
-template <typename T, typename U>
-bool CanTypeFitValue(const U value)
-{
-    const intmax_t botT = intmax_t(std::numeric_limits<T>::min());
-    const intmax_t botU = intmax_t(std::numeric_limits<U>::min());
-    const uintmax_t topT = uintmax_t(std::numeric_limits<T>::max());
-    const uintmax_t topU = uintmax_t(std::numeric_limits<U>::max());
-    return !((botT > botU && value < static_cast<U>(botT)) ||
-             (topT < topU && value > static_cast<U>(topT)));
-}
-
-struct PatternMatchVector {
-    struct MapElem {
-        uint64_t key = 0;
-        uint64_t value = 0;
-    };
-    std::array<MapElem, 128> m_map;
-    std::array<uint64_t, 256> m_extendedAscii;
-
-    PatternMatchVector() : m_map(), m_extendedAscii()
-    {}
-
-    template <typename InputIt>
-    PatternMatchVector(InputIt first, InputIt last) : m_map(), m_extendedAscii()
-    {
-        insert(first, last);
-    }
-
-    template <typename InputIt>
-    void insert(InputIt first, InputIt last)
-    {
-        uint64_t mask = 1;
-        for (; first != last; ++first) {
-            insert_mask(*first, mask);
-            mask <<= 1;
-        }
-    }
-
-    template <typename CharT>
-    void insert(CharT key, int64_t pos)
-    {
-        insert_mask(key, 1ull << pos);
-    }
-
-    template <typename CharT>
-    uint64_t get(CharT key) const
-    {
-        if (key >= 0 && key <= 255) {
-            return m_extendedAscii[(uint8_t)key];
-        }
-        else {
-            return m_map[lookup((uint64_t)key)].value;
-        }
-    }
-
-    template <typename CharT>
-    uint64_t get(int64_t block, CharT key) const
-    {
-        assert(block == 0);
-        (void)block;
-        return get(key);
-    }
-
-private:
-    template <typename CharT>
-    void insert_mask(CharT key, uint64_t mask)
-    {
-        if (key >= 0 && key <= 255) {
-            m_extendedAscii[(uint8_t)key] |= mask;
-        }
-        else {
-            uint64_t i = lookup((uint64_t)key);
-            m_map[i].key = key;
-            m_map[i].value |= mask;
-        }
-    }
-
-    /**
-     * lookup key inside the hashmap using a similar collision resolution
-     * strategy to CPython and Ruby
-     */
-    uint64_t lookup(uint64_t key) const
-    {
-        uint64_t i = key % 128;
-
-        if (!m_map[i].value || m_map[i].key == key) {
-            return i;
-        }
-
-        uint64_t perturb = key;
-        while (true) {
-            i = ((i * 5) + perturb + 1) % 128;
-            if (!m_map[i].value || m_map[i].key == key) {
-                return i;
-            }
-
-            perturb >>= 5;
-        }
-    }
-};
-
-struct BlockPatternMatchVector {
-    std::vector<PatternMatchVector> m_val;
-
-    BlockPatternMatchVector()
-    {}
-
-    template <typename InputIt>
-    BlockPatternMatchVector(InputIt first, InputIt last)
-    {
-        insert(first, last);
-    }
-
-    template <typename CharT>
-    void insert(int64_t block, CharT ch, int pos)
-    {
-        auto* be = &m_val[block];
-        be->insert(ch, pos);
-    }
-
-    template <typename InputIt>
-    void insert(InputIt first, InputIt last)
-    {
-        int64_t len = std::distance(first, last);
-        int64_t block_count = (len / 64) + bool(len % 64);
-        m_val.resize(block_count);
-
-        for (int64_t block = 0; block < block_count; ++block) {
-            if (std::distance(first + block * 64, last) > 64) {
-                m_val[block].insert(first + block * 64, first + (block + 1) * 64);
-            }
-            else {
-                m_val[block].insert(first + block * 64, last);
-            }
-        }
-    }
-
-    template <typename CharT>
-    uint64_t get(int64_t block, CharT ch) const
-    {
-        auto* be = &m_val[block];
-        return be->get(ch);
-    }
-};
-
-template <typename CharT1, int64_t size = sizeof(CharT1)>
-struct CharSet;
-
-template <typename CharT1>
-struct CharSet<CharT1, 1> {
-    using UCharT1 = typename std::make_unsigned<CharT1>::type;
-
-    std::array<bool, std::numeric_limits<UCharT1>::max() + 1> m_val;
-
-    CharSet() : m_val{}
-    {}
-
-    void insert(CharT1 ch)
-    {
-        m_val[UCharT1(ch)] = true;
-    }
-
-    template <typename CharT2>
-    bool find(CharT2 ch) const
-    {
-        if (!CanTypeFitValue<CharT1>(ch)) {
-            return false;
-        }
-
-        return m_val[UCharT1(ch)];
-    }
-};
-
-template <typename CharT1, int64_t size>
-struct CharSet {
-    std::unordered_set<CharT1> m_val;
-
-    CharSet() : m_val{}
-    {}
-
-    void insert(CharT1 ch)
-    {
-        m_val.insert(ch);
-    }
-
-    template <typename CharT2>
-    bool find(CharT2 ch) const
-    {
-        if (!CanTypeFitValue<CharT1>(ch)) {
-            return false;
-        }
-
-        return m_val.find(CharT1(ch)) != m_val.end();
-    }
-};
-
-template <typename T>
-struct MatrixVectorView {
-    explicit MatrixVectorView(T* vector, int64_t cols) : m_vector(vector), m_cols(cols)
-    {}
-
-    T& operator[](uint64_t col)
-    {
-        assert(col < m_cols);
-        return m_vector[col];
-    }
-
-    int64_t size() const
-    {
-        return m_cols;
-    }
-
-private:
-    T* m_vector;
-    int64_t m_cols;
-};
-
-template <typename T>
-struct ConstMatrixVectorView {
-    explicit ConstMatrixVectorView(const T* vector, int64_t cols) : m_vector(vector), m_cols(cols)
-    {}
-
-    ConstMatrixVectorView(const MatrixVectorView<T>& other) : m_vector(other.m_vector)
-    {}
-
-    const T& operator[](uint64_t col)
-    {
-        assert(col < m_cols);
-        return m_vector[col];
-    }
-
-    int64_t size() const
-    {
-        return m_cols;
-    }
-
-private:
-    const T* m_vector;
-    int64_t m_cols;
-};
-
-template <typename T>
-struct Matrix {
-    Matrix(uint64_t rows, uint64_t cols, uint64_t val)
-    {
-        m_rows = rows;
-        m_cols = cols;
-        if (rows * cols > 0) {
-            m_matrix = new T[rows * cols];
-            std::fill_n(m_matrix, rows * cols, val);
-        }
-        else {
-            m_matrix = nullptr;
-        }
-    }
-
-    ~Matrix()
-    {
-        delete[] m_matrix;
-    }
-
-    MatrixVectorView<uint64_t> operator[](uint64_t row)
-    {
-        assert(row < m_rows);
-        return MatrixVectorView<uint64_t>(&m_matrix[row * m_cols], m_cols);
-    }
-
-    ConstMatrixVectorView<uint64_t> operator[](uint64_t row) const
-    {
-        assert(row < m_rows);
-        return ConstMatrixVectorView<uint64_t>(&m_matrix[row * m_cols], m_cols);
-    }
-
-    uint64_t rows() const
-    {
-        return m_rows;
-    }
-
-    uint64_t cols() const
-    {
-        return m_cols;
-    }
-
-private:
-    uint64_t m_rows;
-    uint64_t m_cols;
-    T* m_matrix;
-};
 
 /**@}*/
 
